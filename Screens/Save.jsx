@@ -1,57 +1,83 @@
-import React from 'react';
-import {
-  Text,
-  SafeAreaView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
-} from 'react-native';
+import React, { useState } from 'react';
+import { SafeAreaView, Text, TextInput, TouchableOpacity, StyleSheet, Alert, View } from 'react-native';
+import SQLite from 'react-native-sqlite-storage';
 
-export default function Save({navigation}) {
+const Save = ({ navigation }) => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const db = SQLite.openDatabase(
+    { name: 'credentials.db', location: 'default' },
+    () => {},
+    (error) => {
+      console.log(error);
+      Alert.alert('Error', 'Failed to open the database.');
+    }
+  );
+
+  const saveData = () => {
+    if (!name || !email || !password) {
+      Alert.alert('Error', 'Please fill all fields');
+      return;
+    }
+
+    db.transaction((tx) => {
+      tx.executeSql(
+        'INSERT INTO credentials (name, email, password) VALUES (?, ?, ?)',
+        [name, email, password],
+        () => {
+          Alert.alert('Success', 'Credentials saved');
+          navigation.goBack();
+        },
+        (error) => {
+          console.log(error);
+          Alert.alert('Error', 'Failed to save credentials.');
+        }
+      );
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <Text style={styles.heading}>Save New Credential</Text>
-          <View style={styles.formContainer}>
-            <Text style={styles.label}>Title</Text>
-            <TextInput
-              placeholder="e.g., Bank Account, Work Email"
-              placeholderTextColor="#888"
-              style={styles.input}
-            />
+      <Text style={styles.heading}>Save New Credential</Text>
 
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              placeholder="Enter email"
-              placeholderTextColor="#888"
-              style={styles.input}
-            />
+      <View style={styles.formContainer}>
+        <Text style={styles.label}>Enter Name</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Name"
+          placeholderTextColor="#888"
+          value={name}
+          onChangeText={setName}
+        />
+        
+        <Text style={styles.label}>Enter Email</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#888"
+          value={email}
+          onChangeText={setEmail}
+        />
 
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              placeholder="Enter password"
-              placeholderTextColor="#888"
-              style={styles.input}
-              secureTextEntry={true}
-            />
+        <Text style={styles.label}>Enter Password</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          placeholderTextColor="#888"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
 
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.textButton}>Save Credential</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        <TouchableOpacity style={styles.button} onPress={saveData}>
+          <Text style={styles.buttonText}>Save</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -112,3 +138,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+
+export default Save;

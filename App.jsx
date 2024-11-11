@@ -7,6 +7,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Home from './Screens/Home';
 import Welcome from './Screens/Welcome';
 import Save from './Screens/Save';
+import Details from './Screens/Details';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,9 +19,10 @@ export default function App() {
           headerShown : false
         }
       }>
-        <Stack.Screen name="Welcome" component={Welcome} options={{ title: 'Welcome' }} />
-        <Stack.Screen name="Home" component={Home} options={{ title: 'Home' }} />
-        <Stack.Screen name="Save" component={Save} options={{ title: 'Save Credential' }} />
+        <Stack.Screen name="Welcome" component={Welcome} />
+        <Stack.Screen name="Home" component={Home}  />
+        <Stack.Screen name="Save" component={Save} />
+        <Stack.Screen name="Details" component={Details}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

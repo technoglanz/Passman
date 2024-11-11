@@ -1,84 +1,109 @@
-import { useState, useEffect } from 'react';
-import {
-  SafeAreaView,
-  Text,
-  TextInput,
-  FlatList,
-  View,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState, useEffect } from 'react';
+import { SafeAreaView, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import SQLite from 'react-native-sqlite-storage';
+import { useFocusEffect } from '@react-navigation/native';  
 
 const Home = ({ navigation }) => {
   const [credentials, setCredentials] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filteredCredentials, setFilteredCredentials] = useState([]);
 
+  const db = SQLite.openDatabase(
+    { name: 'credentials.db', location: 'default' },
+    () => {},
+    (error) => {
+      console.log(error);
+      Alert.alert('Error', 'Failed to open the database.');
+    }
+  );
+
+  // Create the table if it doesn't exist
   useEffect(() => {
-    // Fetch credentials from AsyncStorage
-    const fetchCredentials = async () => {
-      const storedCredentials = await AsyncStorage.getItem('credentials');
-      const parsedCredentials = storedCredentials
-        ? JSON.parse(storedCredentials)
-        : [];
-      setCredentials(parsedCredentials);
-      setFilteredCredentials(parsedCredentials); // Display all credentials initially
-    };
-    fetchCredentials();
+    db.transaction((tx) => {
+      tx.executeSql(
+        `CREATE TABLE IF NOT EXISTS credentials (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT,
+          email TEXT,
+          password TEXT
+        )`,
+        [],
+        () => {
+          console.log('Table created or already exists');
+        },
+        (error) => {
+          console.log(error);
+          Alert.alert('Error', 'Failed to create table.');
+        }
+      );
+    });
   }, []);
 
-  // Filter credentials based on search query
-  useEffect(() => {
-    setFilteredCredentials(
-      credentials.filter((cred) =>
-        cred.title.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-  }, [searchQuery, credentials]);
+  const encrypt = (email) => {
+    if (email.includes('@')) {
+      const [ename, domain] = email.split('@');
+      return '*****@' + domain;
+    }
+    return email;
+  };
+
+  const fetchCredentials = () => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        'SELECT * FROM credentials',
+        [],
+        (tx, results) => {
+          const len = results.rows.length;
+          let tempCredentials = [];
+          for (let i = 0; i < len; i++) {
+            tempCredentials.push(results.rows.item(i));
+          }
+          setCredentials(tempCredentials);
+        },
+        (error) => {
+          console.log(error);
+          Alert.alert('Error', 'Failed to fetch credentials.');
+        }
+      );
+    });
+  };
+
+  // Refresh the credentials whenever the screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchCredentials();  // Fetch credentials every time the screen is focused
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.heading}>Your Saved Credentials</Text>
 
-      {/* Search Bar */}
-      <TextInput
-        style={styles.searchBar}
-        placeholder="Search by title"
-        placeholderTextColor="#888"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
-
-      {/* Credentials List */}
       <FlatList
-        data={filteredCredentials}
-        keyExtractor={(item) => item.id.toString()}
+        data={credentials}
+        keyExtractor={(item, index) => (item.id ? item.id.toString() : index.toString())}
         renderItem={({ item }) => (
-          <View style={styles.credentialItem}>
-            <Text style={styles.credentialTitle}>{item.title}</Text>
-            <Text style={styles.credentialEmail}>{item.email}</Text>
-          </View>
+          <TouchableOpacity
+            style={styles.credentialItem}
+            onPress={() => navigation.navigate('Details', { id: item.id })}
+          >
+            <Text style={styles.credentialTitle}>{item.name}</Text>
+            <Text style={styles.credentialEmail}>Email: {encrypt(item.email)}</Text>
+            <Text style={styles.credentialPassword}>Password: *******</Text>
+          </TouchableOpacity>
         )}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No credentials found.</Text>
-        }
+        ListEmptyComponent={<Text style={styles.emptyText}>No credentials found.</Text>}
       />
 
-    
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => {
-          navigation.navigate('Save');
-        }}>
+        onPress={() => navigation.navigate('Save')}
+      >
         <Text style={styles.addButtonText}>+</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
 };
 
-export default Home;
-
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -90,16 +115,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 20,
-  },
-  searchBar: {
-    backgroundColor: '#1E1E1E',
-    color: '#FFFFFF',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-    borderColor: '#333333',
-    borderWidth: 1,
     marginBottom: 20,
   },
   credentialItem: {
@@ -114,6 +129,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   credentialEmail: {
+    color: '#AAAAAA',
+    fontSize: 16,
+  },
+  credentialPassword: {
     color: '#AAAAAA',
     fontSize: 16,
   },
@@ -132,10 +151,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'red',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 5,
   },
   addButtonText: {
     color: '#FFFFFF',
@@ -143,3 +158,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+export default Home;
