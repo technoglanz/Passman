@@ -105,7 +105,6 @@ export default function Details({navigation, route}) {
             style={styles.input}
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
           />
           <TouchableOpacity style={styles.button} onPress={handleUpdate}>
             <Text style={styles.textButton}>Update</Text>
