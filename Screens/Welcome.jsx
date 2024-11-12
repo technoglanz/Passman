@@ -29,6 +29,7 @@ const Welcome = ({ navigation }) => {
     };
 
     loadCredentials();
+    
   }, []);
 
   // Handle the "Forgot PIN" functionality
@@ -106,7 +107,7 @@ const Welcome = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.heading}>Welcome</Text>
+      <Text style={styles.heading}>P A S S M A N</Text>
 
       {isRegistered ? (
         // Login Screen

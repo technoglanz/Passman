@@ -52,7 +52,7 @@ const Save = ({ navigation }) => {
           onChangeText={setName}
         />
         
-        <Text style={styles.label}>Enter Email</Text>
+        <Text style={styles.label}>Enter Email/ Username</Text>
         <TextInput
           style={styles.input}
           placeholder="Email"
