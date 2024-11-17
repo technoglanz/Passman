@@ -57,6 +57,7 @@ const Welcome = ({ navigation }) => {
   
         setIsModalVisible(false); // Close modal
         Alert.alert('PIN Reset', `Your PIN has been reset successfully. New PIN is: ${newPin}`);
+        setMobileNo('');
       } catch (error) {
         Alert.alert('Error', 'Failed to reset PIN.');
         console.error("Error resetting PIN: ", error);
@@ -98,6 +99,7 @@ const Welcome = ({ navigation }) => {
   
     if (pin === savedPin) {
       navigation.navigate('Home'); // Navigate to Home screen if PIN matches
+      setPin('')
     } else {
       Alert.alert('Error', 'Invalid PIN');
     }
