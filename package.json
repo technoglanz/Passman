@@ -10,51 +10,25 @@
     "test": "jest"
   },
   "dependencies": {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "@react-native-async-storage/async-storage": "^2.0.0",
-    "@react-navigation/native": "^7.0.0",
-    "@react-navigation/native-stack": "^7.0.0",
-    "papaparse": "^5.5.1",
-    "react": "18.3.1",
-    "react-native": "0.76.1",
-    "react-native-document-picker": "^9.3.1",
-    "react-native-fs": "^2.20.0",
-    "react-native-permissions": "^5.2.3",
-    "react-native-safe-area-context": "^4.14.0",
-    "react-native-screens": "^4.0.0",
-    "react-native-sqlite-storage": "^6.0.1",
-    "react-native-vector-icons": "^10.2.0"
-=======
-    "react": "18.3.1",
-    "react-native": "0.76.6"
->>>>>>> 6090357 (Initial commit)
-=======
     "@react-native-async-storage/async-storage": "^2.1.0",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/native-stack": "^7.2.0",
+    "papaparse": "^5.5.1",
     "react": "18.3.1",
     "react-native": "0.76.6",
+    "react-native-document-picker": "^9.3.1",
+    "react-native-fs": "^2.20.0",
+    "react-native-permissions": "^5.2.3",
     "react-native-safe-area-context": "^5.1.0",
     "react-native-screens": "^4.5.0",
     "react-native-sqlite-storage": "^6.0.1",
     "react-native-vector-icons": "^10.2.0",
     "react-navigation": "^5.0.0"
->>>>>>> 4535702 (minor bug fixes)
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.3",
     "@babel/runtime": "^7.25.0",
-<<<<<<< HEAD
-    "@react-native-community/cli": "15.0.0",
-    "@react-native-community/cli-platform-android": "15.0.0",
-    "@react-native-community/cli-platform-ios": "15.0.0",
-    "@react-native/babel-preset": "0.76.1",
-    "@react-native/eslint-config": "0.76.1",
-    "@react-native/metro-config": "0.76.1",
-    "@react-native/typescript-config": "0.76.1",
-=======
     "@react-native-community/cli": "15.0.1",
     "@react-native-community/cli-platform-android": "15.0.1",
     "@react-native-community/cli-platform-ios": "15.0.1",
@@ -62,7 +36,6 @@
     "@react-native/eslint-config": "0.76.6",
     "@react-native/metro-config": "0.76.6",
     "@react-native/typescript-config": "0.76.6",
->>>>>>> 6090357 (Initial commit)
     "@types/react": "^18.2.6",
     "@types/react-test-renderer": "^18.0.0",
     "babel-jest": "^29.6.3",
@@ -75,12 +48,4 @@
   "engines": {
     "node": ">=18"
   }
-<<<<<<< HEAD
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 6090357 (Initial commit)
-=======
-}
->>>>>>> 4535702 (minor bug fixes)
