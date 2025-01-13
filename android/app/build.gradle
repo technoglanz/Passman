@@ -1,7 +1,10 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+<<<<<<< HEAD
 apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
+=======
+>>>>>>> 6090357 (Initial commit)
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -83,11 +86,16 @@ android {
         applicationId "com.passman"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
+<<<<<<< HEAD
         versionCode 2
         versionName "2.0"
         ndk {
             abiFilters "armeabi-v7a", "arm64-v8a"
         }
+=======
+        versionCode 1
+        versionName "1.0"
+>>>>>>> 6090357 (Initial commit)
     }
     signingConfigs {
         debug {
