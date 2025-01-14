@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   SafeAreaView,
   Text,
@@ -10,16 +10,16 @@ import {
   View,
   PermissionsAndroid,
   Linking,
-  Platform
+  Platform,
 } from 'react-native';
 import SQLite from 'react-native-sqlite-storage';
-import { useFocusEffect } from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import DocumentPicker from 'react-native-document-picker';
 import RNFS from 'react-native-fs';
 import Papa from 'papaparse';
 
-const Home = ({ navigation }) => {
+const Home = ({navigation}) => {
   const [credentials, setCredentials] = useState([]);
   const [searchCredentials, setSearchCredentials] = useState([]);
   const [search, setSearch] = useState('');
@@ -27,21 +27,21 @@ const Home = ({ navigation }) => {
   const isMounted = useRef(true);
 
   const db = SQLite.openDatabase(
-    { name: 'credentials.db', location: 'default' },
+    {name: 'credentials.db', location: 'default'},
     () => {},
-    (error) => {
+    error => {
       console.log(error);
       if (isMounted.current) {
         Alert.alert('Error', 'Failed to open the database.');
       }
-    }
+    },
   );
 
   // Create the table if it doesn't exist
   useEffect(() => {
     isMounted.current = true;
 
-    db.transaction((tx) => {
+    db.transaction(tx => {
       tx.executeSql(
         `CREATE TABLE IF NOT EXISTS credentials (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,12 +53,12 @@ const Home = ({ navigation }) => {
         () => {
           console.log('Table created or already exists');
         },
-        (error) => {
+        error => {
           console.log(error);
           if (isMounted.current) {
             Alert.alert('Error', 'Failed to create table.');
           }
-        }
+        },
       );
     });
 
@@ -67,7 +67,7 @@ const Home = ({ navigation }) => {
     };
   }, []);
 
-  const encrypt = (email) => {
+  const encrypt = email => {
     if (email.includes('@')) {
       const [ename, domain] = email.split('@');
       return '*****@' + domain;
@@ -76,7 +76,7 @@ const Home = ({ navigation }) => {
   };
 
   const fetchCredentials = () => {
-    db.transaction((tx) => {
+    db.transaction(tx => {
       tx.executeSql(
         'SELECT * FROM credentials',
         [],
@@ -91,20 +91,20 @@ const Home = ({ navigation }) => {
             setSearchCredentials(tempCredentials);
           }
         },
-        (error) => {
+        error => {
           console.log(error);
           if (isMounted.current) {
             Alert.alert('Error', 'Failed to fetch credentials.');
           }
-        }
+        },
       );
     });
   };
 
-  const handleSearch = (text) => {
+  const handleSearch = text => {
     setSearch(text);
-    const filteredData = credentials.filter((data) =>
-      data.name.toLowerCase().includes(text.toLowerCase())
+    const filteredData = credentials.filter(data =>
+      data.name.toLowerCase().includes(text.toLowerCase()),
     );
     if (isMounted.current) {
       setSearchCredentials(filteredData);
@@ -112,93 +112,39 @@ const Home = ({ navigation }) => {
   };
 
   const requestPermissions = async () => {
-    try {
-      // Check if permissions are required for the current platform
-      if (Platform.OS !== 'android') {
-        console.log('Permissions are not required for non-Android platforms.');
-        return;
-      }
-  
-      // Check for Android version (MANAGE_EXTERNAL_STORAGE is required for Android 11+)
-      const androidVersion = parseInt(Platform.Version, 10);
-  
-      if (androidVersion >= 30) {
-        // For Android 11+ (API 30+), MANAGE_EXTERNAL_STORAGE is not handled directly by PermissionsAndroid
-        const readGranted = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE);
-        const writeGranted = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE);
-  
-        if (!readGranted || !writeGranted) {
-          const granted = await PermissionsAndroid.requestMultiple([
-            PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-          ]);
-  
-          if (
-            granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] !== PermissionsAndroid.RESULTS.GRANTED ||
-            granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] !== PermissionsAndroid.RESULTS.GRANTED
-          ) {
-            Alert.alert(
-              'Permissions Denied',
-              'You have denied storage permissions. Please enable them in app settings.',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Open Settings', onPress: () => Linking.openSettings() },
-              ]
-            );
-            return;
-          }
+    if (Platform.OS === 'android') {
+        const version = Platform.Version; // Get the Android version
+
+        // If the Android version is below 10, request for READ_EXTERNAL_STORAGE permission
+        if (version < 29) {
+            const result = await request(PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE);
+            if (result === RESULTS.GRANTED) {
+                console.log('READ_EXTERNAL_STORAGE permission granted!');
+            } else {
+                console.log('READ_EXTERNAL_STORAGE permission denied!');
+            }
         }
-  
-        // Check MANAGE_EXTERNAL_STORAGE manually
-        const manageGranted = await PermissionsAndroid.check('android.permission.MANAGE_EXTERNAL_STORAGE');
-        if (!manageGranted) {
-          Alert.alert(
-            'Manage All Files Access',
-            'Please grant "All Files Access" for this app manually in the settings.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Open Settings', onPress: () => Linking.openSettings() },
-            ]
-          );
+        // If the Android version is between 10 and 12, request Scoped Storage permissions
+        else if (version >= 29 && version < 33) {
+            const result = await request(PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE);
+            if (result === RESULTS.GRANTED) {
+                console.log('READ_EXTERNAL_STORAGE permission granted!');
+            } else {
+                console.log('READ_EXTERNAL_STORAGE permission denied!');
+            }
         }
-  
-        console.log('Permissions granted successfully for Android 11+');
-      } else {
-        // For Android 10 and below
-        const granted = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        ]);
-  
-        if (
-          granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] !== PermissionsAndroid.RESULTS.GRANTED ||
-          granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] !== PermissionsAndroid.RESULTS.GRANTED
-        ) {
-          Alert.alert(
-            'Permissions Denied',
-            'You have denied storage permissions. Please enable them in app settings.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Open Settings', onPress: () => Linking.openSettings() },
-            ]
-          );
-          return;
+        // For Android 13+, use Document Picker API for file access (no permissions required for CSV)
+        else if (version >= 33) {
+            console.log('No need for READ_EXTERNAL_STORAGE on Android 13+');
+            // No need to ask for permissions, just use the Document Picker API
         }
-  
-        console.log('Permissions granted successfully for Android 10 and below');
-      }
-    } catch (err) {
-      console.error('Error requesting permissions:', err);
-      Alert.alert('Error', 'An error occurred while requesting permissions.');
     }
-  };
-  
+};
 
   useFocusEffect(
     React.useCallback(() => {
-      requestPermissions();
       fetchCredentials();
-    }, [])
+    }, []),
   );
 
   const selectFile = async () => {
@@ -206,50 +152,52 @@ const Home = ({ navigation }) => {
       const res = await DocumentPicker.pick({
         type: [DocumentPicker.types.allFiles],
       });
-  
+
       console.log('Selected file:', res);
-  
-      const { uri, name } = res[0];
-      
+
+      const {uri, name} = res[0];
+
       // Check if URI exists
       if (!uri) {
         console.error('Error: No URI found in the selected file');
         Alert.alert('Error', 'No URI found in the selected file.');
         return;
       }
-  
+
       console.log('File URI:', uri);
-  
+
       // On Android, the URI is a content URI; resolve it to a file path
       if (Platform.OS === 'android') {
         if (uri.startsWith('content://')) {
           // Use react-native-fs to read the content URI directly (no need to copy)
           const fileContent = await RNFS.readFile(uri, 'utf8');
           console.log('File content:', fileContent);
-  
+
           // Parse CSV
           Papa.parse(fileContent, {
             header: true,
             skipEmptyLines: true,
-            complete: (result) => {
+            complete: result => {
               const importedCredentials = result.data;
-              importedCredentials.forEach((credential) => {
-                db.transaction((tx) => {
+              importedCredentials.forEach(credential => {
+                db.transaction(tx => {
                   tx.executeSql(
                     'INSERT INTO credentials (name, email, password) VALUES (?, ?, ?)',
                     [credential.name, credential.username, credential.password],
                     () => {
-                      console.log(`Credential for ${credential.name} imported successfully`);
+                      console.log(
+                        `Credential for ${credential.name} imported successfully`,
+                      );
                     },
-                    (error) => {
+                    error => {
                       console.log('Error inserting credential', error);
-                    }
+                    },
                   );
                 });
               });
               fetchCredentials();
             },
-            error: (err) => {
+            error: err => {
               console.error('Error parsing CSV:', err);
               Alert.alert('Error', 'There was a problem reading the CSV file.');
             },
@@ -263,30 +211,32 @@ const Home = ({ navigation }) => {
         // For iOS or other platforms, we handle it differently
         const fileContent = await RNFS.readFile(uri, 'utf8');
         console.log('File content:', fileContent);
-  
+
         // Parse CSV
         Papa.parse(fileContent, {
           header: true,
           skipEmptyLines: true,
-          complete: (result) => {
+          complete: result => {
             const importedCredentials = result.data;
-            importedCredentials.forEach((credential) => {
-              db.transaction((tx) => {
+            importedCredentials.forEach(credential => {
+              db.transaction(tx => {
                 tx.executeSql(
                   'INSERT INTO credentials (name, email, password) VALUES (?, ?, ?)',
                   [credential.name, credential.email, credential.password],
                   () => {
-                    console.log(`Credential for ${credential.name} imported successfully`);
+                    console.log(
+                      `Credential for ${credential.name} imported successfully`,
+                    );
                   },
-                  (error) => {
+                  error => {
                     console.log('Error inserting credential', error);
-                  }
+                  },
                 );
               });
             });
             fetchCredentials();
           },
-          error: (err) => {
+          error: err => {
             console.error('Error parsing CSV:', err);
             Alert.alert('Error', 'There was a problem reading the CSV file.');
           },
@@ -301,16 +251,17 @@ const Home = ({ navigation }) => {
       }
     }
   };
-  
-  
-  
-  
 
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.heading}>Your Saved Credentials</Text>
       <View style={styles.searchContainer}>
-        <Icon name="search" size={20} color="#888888" style={styles.searchIcon} />
+        <Icon
+          name="search"
+          size={20}
+          color="#888888"
+          style={styles.searchIcon}
+        />
         <TextInput
           style={styles.searchBar}
           placeholder="Search credentials"
@@ -320,25 +271,40 @@ const Home = ({ navigation }) => {
         />
       </View>
       <FlatList
-  data={searchCredentials}
-  keyExtractor={(item, index) => (item.id ? item.id.toString() : index.toString())}
-  renderItem={({ item }) => (
-    <TouchableOpacity
-      style={styles.credentialItem}
-      onPress={() => navigation.navigate('Details', { id: item.id })}
-    >
-      <Text style={styles.credentialTitle}>{item.name || 'No Name'}</Text>
-      <Text style={styles.credentialEmail}>Username: {item.email ? encrypt(item.email) : 'No Email'}</Text>
-      <Text style={styles.credentialPassword}>Password: {item.password ? '******' : 'No Password'}</Text>
-    </TouchableOpacity>
-  )}
-  ListEmptyComponent={<Text style={styles.emptyText}>No credentials found.</Text>}
-  showsVerticalScrollIndicator={false}
-/>
-      <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('Save')}>
+        data={searchCredentials}
+        keyExtractor={(item, index) =>
+          item.id ? item.id.toString() : index.toString()
+        }
+        renderItem={({item}) => (
+          <TouchableOpacity
+            style={styles.credentialItem}
+            onPress={() => navigation.navigate('Details', {id: item.id})}>
+            <Text style={styles.credentialTitle}>{item.name || 'No Name'}</Text>
+            <Text style={styles.credentialEmail}>
+              Username: {item.email ? encrypt(item.email) : 'No Email'}
+            </Text>
+            <Text style={styles.credentialPassword}>
+              Password: {item.password ? '******' : 'No Password'}
+            </Text>
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No credentials found.</Text>
+        }
+        showsVerticalScrollIndicator={false}
+      />
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => navigation.navigate('Save')}>
         <Text style={styles.addButtonText}>+</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.importButton} onPress={() => selectFile()}>
+      
+      <TouchableOpacity
+        style={styles.importButton}
+        onPress={() => {selectFile(); 
+          // requestPermissions();
+           requestPermissions();
+           }}>
         <Icon name="file-upload" size={50} color="#ffffff" />
       </TouchableOpacity>
     </SafeAreaView>
