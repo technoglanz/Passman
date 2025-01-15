@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Password Manager App
 
 A secure, dark-themed password manager built with [**React Native**](https://reactnative.dev). This app helps you organize, store, and retrieve your credentials securely. It includes PIN authentication for enhanced security and local storage using SQLite.
