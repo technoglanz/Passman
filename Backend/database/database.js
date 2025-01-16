@@ -6,14 +6,16 @@ const db = SQLite.openDatabase(
   error => console.log('Error opening database:', error),
 );
 
+// Initialize the database
 export const initializeDatabase = () => {
   db.transaction(tx => {
     tx.executeSql(
       `CREATE TABLE IF NOT EXISTS credentials (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        email TEXT,
-        password TEXT
+        name TEXT NOT NULL,
+        url TEXT NOT NULL,
+        username TEXT NOT NULL,
+        password TEXT NOT NULL
       )`,
       [],
       () => console.log('Table created or already exists'),

@@ -2,8 +2,7 @@ import DocumentPicker from 'react-native-document-picker';
 import RNFS from 'react-native-fs';
 import Papa from 'papaparse';
 
-
-/// select, import and handle csv file ///
+// Select, parse, and handle CSV file
 export const selectAndParseCSV = async (onSuccess, onError) => {
   try {
     const res = await DocumentPicker.pick({ type: [DocumentPicker.types.allFiles] });
@@ -15,7 +14,12 @@ export const selectAndParseCSV = async (onSuccess, onError) => {
     Papa.parse(fileContent, {
       header: true,
       skipEmptyLines: true,
-      complete: result => onSuccess(result.data),
+      complete: result => {
+        const validData = result.data.filter(
+          item => item.name && item.url && item.username && item.password,
+        );
+        onSuccess(validData);
+      },
       error: onError,
     });
   } catch (err) {
@@ -25,13 +29,4 @@ export const selectAndParseCSV = async (onSuccess, onError) => {
       onError(err);
     }
   }
-};
-
-/// encrypt email ///
-export const encrypt = email => {
-  if (email.includes('@')) {
-    const [ename, domain] = email.split('@');
-    return '*****@' + domain;
-  }
-  return email;
 };
