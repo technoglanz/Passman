@@ -8,6 +8,7 @@ import {
   Alert,
   TextInput,
   View,
+  ActivityIndicator,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -21,28 +22,31 @@ const Home = ({ navigation }) => {
   const [credentials, setCredentials] = useState([]);
   const [searchCredentials, setSearchCredentials] = useState([]);
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
   const isMounted = useRef(true);
 
   useEffect(() => {
     isMounted.current = true;
     initializeDatabase();
-
     return () => {
       isMounted.current = false;
     };
   }, []);
 
   const fetchCredentials = () => {
+    setLoading(true);
     fetchAllCredentials(
       creds => {
         if (isMounted.current) {
           setCredentials(creds);
           setSearchCredentials(creds);
         }
+        setLoading(false);
       },
       error => {
-        console.log(error);
+        console.error(error);
         Alert.alert('Error', 'Failed to fetch credentials.');
+        setLoading(false);
       },
     );
   };
@@ -68,13 +72,13 @@ const Home = ({ navigation }) => {
               item.email,
               item.password,
               () => console.log(`Credential for ${item.name} imported`),
-              error => console.log('Error inserting credential:', error),
+              error => console.error('Error inserting credential:', error),
             );
           });
           fetchCredentials();
         },
         error => {
-          console.log('Error parsing CSV:', error);
+          console.error('Error parsing CSV:', error);
           Alert.alert('Error', 'Failed to read the CSV file.');
         },
       );
@@ -89,16 +93,25 @@ const Home = ({ navigation }) => {
     }, []),
   );
 
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.credentialItem}
+      onPress={() => navigation.navigate('Details', { id: item.id })}>
+      <Text style={styles.credentialTitle}>{item.name || 'No Name'}</Text>
+      <Text style={styles.credentialEmail}>
+        Username: {item.email ? encrypt(item.email) : 'No Email'}
+      </Text>
+      <Text style={styles.credentialPassword}>
+        Password: {item.password ? '******' : 'No Password'}
+      </Text>
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.heading}>Your Saved Credentials</Text>
       <View style={styles.searchContainer}>
-        <Icon
-          name="search"
-          size={20}
-          color="#888888"
-          style={styles.searchIcon}
-        />
+        <Icon name="search" size={20} color="#888888" style={styles.searchIcon} />
         <TextInput
           style={styles.searchBar}
           placeholder="Search credentials"
@@ -107,46 +120,34 @@ const Home = ({ navigation }) => {
           onChangeText={handleSearch}
         />
       </View>
-      <FlatList
-        data={searchCredentials}
-        keyExtractor={(item, index) =>
-          item.id ? item.id.toString() : index.toString()
-        }
-        renderItem={({item}) => (
-          <TouchableOpacity
-            style={styles.credentialItem}
-            onPress={() => navigation.navigate('Details', {id: item.id})}>
-            <Text style={styles.credentialTitle}>{item.name || 'No Name'}</Text>
-            <Text style={styles.credentialEmail}>
-              Username: {item.email ? encrypt(item.email) : 'No Email'}
-            </Text>
-            <Text style={styles.credentialPassword}>
-              Password: {item.password ? '******' : 'No Password'}
-            </Text>
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No credentials found.</Text>
-        }
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#ffffff" />
+      ) : (
+        <FlatList
+          data={searchCredentials}
+          keyExtractor={(item, index) => (item.id ? item.id.toString() : index.toString())}
+          renderItem={renderItem}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Icon name="lock-outline" size={50} color="#888888" />
+              <Text style={styles.emptyText}>No credentials found.</Text>
+            </View>
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      )}
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => navigation.navigate('Save')}>
         <Text style={styles.addButtonText}>+</Text>
       </TouchableOpacity>
-      
-      <TouchableOpacity
-        style={styles.importButton}
-        onPress={() => {handleFileImport(); 
-          // requestPermissions();
-           requestPermissions();
-           }}>
-        <Icon name="file-upload" size={50} color="#ffffff" />
+      <TouchableOpacity style={styles.importButton} onPress={handleFileImport}>
+        <Icon name="file-upload" size={30} color="#ffffff" />
       </TouchableOpacity>
     </SafeAreaView>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -194,6 +195,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#ffffff',
   },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
   emptyText: {
     fontSize: 18,
     color: '#888888',
@@ -222,7 +227,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: 'green',
+    backgroundColor: '#4CAF50',
     justifyContent: 'center',
     alignItems: 'center',
   },

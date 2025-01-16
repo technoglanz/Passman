@@ -79,6 +79,7 @@ const Welcome = ({ navigation }) => {
         setSavedPin(pin); // Set the state after successful registration
         setSavedMobileNo(mobileNo); // Store the registered mobile number
         setIsRegistered(true); // Switch to login screen
+        setPin(''); // set pin field empty
         Alert.alert('Registration Successful', 'You have been registered successfully.');
       } catch (error) {
         Alert.alert('Error', 'Failed to save the credentials.');
