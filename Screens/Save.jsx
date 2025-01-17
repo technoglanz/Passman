@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { SafeAreaView, Text, TextInput, TouchableOpacity, StyleSheet, Alert, View } from 'react-native';
 import SQLite from 'react-native-sqlite-storage';
+import { insertCredential } from '../Backend/database/queries';
 
 const Save = ({ navigation }) => {
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [url, setUrl] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const db = SQLite.openDatabase(
@@ -16,27 +18,14 @@ const Save = ({ navigation }) => {
     }
   );
 
-  const saveData = () => {
-    if (!name || !email || !password) {
-      Alert.alert('Error', 'Please fill all fields');
-      return;
-    }
+  const handleInsert = ()=> {
 
-    db.transaction((tx) => {
-      tx.executeSql(
-        'INSERT INTO credentials (name, email, password) VALUES (?, ?, ?)',
-        [name, email, password],
-        () => {
-          Alert.alert('Success', 'Credentials saved');
-          navigation.goBack();
-        },
-        (error) => {
-          console.log(error);
-          Alert.alert('Error', 'Failed to save credentials.');
-        }
-      );
-    });
-  };
+    insertCredential(name, url, username, password);
+    navigation.goBack();
+    Alert.alert('Saved successfully !');
+    
+  }
+ 
 
   return (
     <SafeAreaView style={styles.container}>
@@ -52,13 +41,22 @@ const Save = ({ navigation }) => {
           onChangeText={setName}
         />
         
-        <Text style={styles.label}>Enter Email/ Username</Text>
+        <Text style={styles.label}>Enter url</Text>
         <TextInput
           style={styles.input}
-          placeholder="Email"
+          placeholder="url"
           placeholderTextColor="#888"
-          value={email}
-          onChangeText={setEmail}
+          value={url}
+          onChangeText={setUrl}
+        />
+
+        <Text style={styles.label}>Enter username</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="username"
+          placeholderTextColor="#888"
+          value={username}
+          onChangeText={setUsername}
         />
 
         <Text style={styles.label}>Enter Password</Text>
@@ -68,10 +66,10 @@ const Save = ({ navigation }) => {
           placeholderTextColor="#888"
           value={password}
           onChangeText={setPassword}
-          secureTextEntry
+        
         />
 
-        <TouchableOpacity style={styles.button} onPress={saveData}>
+        <TouchableOpacity style={styles.button} onPress={handleInsert}>
           <Text style={styles.buttonText}>Save</Text>
         </TouchableOpacity>
       </View>

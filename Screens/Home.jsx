@@ -21,7 +21,7 @@ const Home = ({ navigation }) => {
   const [credentials, setCredentials] = useState([]);
   const [searchCredentials, setSearchCredentials] = useState([]);
   const [search, setSearch] = useState('');
-  const [isLoading, setIsLoading] = useState(false); // Loading state
+  const [isLoading, setIsLoading] = useState(false);
   const isMounted = useRef(true);
 
   useEffect(() => {
@@ -34,84 +34,76 @@ const Home = ({ navigation }) => {
   }, []);
 
   const fetchCredentials = () => {
-    setIsLoading(true); // Start loading indicator when fetching data
+    setIsLoading(true);
     fetchAllCredentials(
-      creds => {
+      (creds) => {
         if (isMounted.current) {
           setCredentials(creds);
           setSearchCredentials(creds);
-          setIsLoading(false); // Hide loading indicator after fetching data
         }
+        setIsLoading(false);
       },
-      error => {
+      (error) => {
         console.log(error);
         Alert.alert('Error', 'Failed to fetch credentials.');
-        setIsLoading(false); // Hide loading indicator on error
-      },
+        setIsLoading(false);
+      }
     );
   };
 
-  const handleSearch = text => {
+  const handleSearch = (text) => {
     setSearch(text);
-    const filteredData = credentials.filter(data =>
-      data.name.toLowerCase().includes(text.toLowerCase()),
+    const filteredData = credentials.filter((data) =>
+      data.name.toLowerCase().includes(text.toLowerCase())
     );
-    if (isMounted.current) {
-      setSearchCredentials(filteredData);
-    }
+    setSearchCredentials(filteredData);
   };
 
   const handleFileImport = async () => {
-    setIsLoading(true); // Show loading indicator when starting the import process
     const permissionGranted = await requestPermissions();
-    if (permissionGranted) {
-      try {
-        const data = await selectAndParseCSV(); 
-        if (data.length === 0) {
-          // No file selected or no data found
-          setIsLoading(false); // Hide loading indicator if no file is selected
-          Alert.alert('No File Selected', 'Please select a CSV file.'); 
-          return;
-        }
-
-        // If CSV data is available, insert the credentials
-        for (const item of data) {
-          await insertCredential(
-            item.name,
-            item.url,
-            item.username,
-            item.password,
-            () => console.log(`Credential for ${item.name} imported`),
-            error => console.log('Error inserting credential:', error),
-          );
-        }
-
-        // Update credentials after all imports are complete
-        fetchCredentials(); 
-      } catch (error) {
-        console.log('Error parsing CSV:', error);
-        Alert.alert('Error', 'Failed to read the CSV file.');
-        setIsLoading(false); // Hide loading indicator if there's an error
-      }
-    } else {
+    if (!permissionGranted) {
       Alert.alert('Permission Denied', 'Storage permission is required to import files.');
-      setIsLoading(false); // Hide loading indicator if permission is denied
+      return;
+    }
+  
+    try {
+      const data = await selectAndParseCSV();
+  
+      // If no data (e.g., user canceled or no file), exit early
+      if (!data || data.length === 0) {
+       console.log('No Data', 'No data found in the selected file.');
+        return;
+      }
+  
+      // Process the parsed data
+      for (const item of data) {
+        await insertCredential(
+          item.name,
+          item.url,
+          item.username,
+          item.password,
+          () => console.log(`Credential for ${item.name} imported`),
+          (error) => console.log('Error inserting credential:', error)
+        );
+      }
+  
+      fetchCredentials();
+    } catch (error) {
+      console.error('Error importing file:', error);
+      Alert.alert('Error', 'Failed to import the file.');
     }
   };
+  
+  
+  
 
-  // Handle focus effect to reset the loading indicator when navigating back or away
   useFocusEffect(
     React.useCallback(() => {
-      // Reset loading state if we're navigating back or if no file is imported
-      setIsLoading(false); 
-      fetchCredentials(); 
-    }, []),
+      fetchCredentials();
+    }, [])
   );
 
-  // Shorten URL function
-  const shortenUrl = (url) => {
-    return url && url.length > 30 ? url.substring(0, 30) + '...' : url;
-  };
+  const shortenUrl = (url) => (url && url.length > 30 ? `${url.substring(0, 30)}...` : url);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -127,32 +119,31 @@ const Home = ({ navigation }) => {
         />
       </View>
 
-      {/* Show loading indicator while data is being fetched or imported */}
       {isLoading ? (
         <ActivityIndicator size="large" color="#FF6347" style={styles.loadingIndicator} />
       ) : (
         <FlatList
           data={searchCredentials}
-          keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
+          keyExtractor={(item) => item.id?.toString()}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.credentialItem}
-              onPress={() => navigation.navigate('Details', { id: item.id })}>
+              onPress={() => navigation.navigate('Details', { id: item.id })}
+            >
               <Text style={styles.credentialTitle}>{item.name || 'No Name'}</Text>
               <Text style={styles.credentialUrl}>URL: {shortenUrl(item.url) || 'No URL'}</Text>
               <Text style={styles.credentialUsername}>Username: {item.username || 'No Username'}</Text>
             </TouchableOpacity>
           )}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>No credentials found.</Text>
-          }
+          ListEmptyComponent={<Text style={styles.emptyText}>No credentials found.</Text>}
           showsVerticalScrollIndicator={false}
         />
       )}
 
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => navigation.navigate('Save')}>
+        onPress={() => navigation.navigate('Save')}
+      >
         <Text style={styles.addButtonText}>+</Text>
       </TouchableOpacity>
 
@@ -200,7 +191,7 @@ const styles = StyleSheet.create({
   credentialTitle: {
     fontSize: 18,
     color: '#ffffff',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   credentialUrl: {
     fontSize: 16,
@@ -218,7 +209,7 @@ const styles = StyleSheet.create({
   addButton: {
     position: 'absolute',
     bottom: 25,
-    right: 25, 
+    right: 25,
     width: 60,
     height: 60,
     borderRadius: 30,
@@ -234,7 +225,7 @@ const styles = StyleSheet.create({
   importButton: {
     position: 'absolute',
     bottom: 100,
-    right: 25, 
+    right: 25,
     width: 60,
     height: 60,
     borderRadius: 30,
